@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit
 
 object Publishers {
 
-    fun <T> onSubscribe(setup: (Subscriber<T>) -> Unit): Publisher<T> = HotPublisher(setup)
+    fun <T> empty(): Publisher<T> = EmptyPublisher()
 
     fun <T> elements(vararg elements: T): Publisher<T> {
         return HotPublisher { streamer ->
@@ -34,6 +34,10 @@ object Publishers {
             streamer.onComplete()
         }
     }
+
+    fun <T> open(): OpenPublisher<T> = object : HotPublisher<T>(), OpenPublisher<T> {}
+
+    fun <T> onSubscribe(setup: (Subscriber<T>) -> Unit): Publisher<T> = HotPublisher(setup)
 }
 
 internal abstract class BasePublisher<T> : Publisher<T> {
@@ -54,7 +58,13 @@ internal abstract class BasePublisher<T> : Publisher<T> {
     override fun doOnFinish(action: () -> Unit) = DoOnFinishProcessor(this, action)
 }
 
-internal open class HotPublisher<T>(private val setup: (Subscriber<T>) -> Unit) : BasePublisher<T>(), Subscriber<T>, Subscription {
+//FIXME Create tests for EmptyPublisher
+internal class EmptyPublisher<T> : BasePublisher<T>() {
+    override fun subscribe(subscriber: Subscriber<T>) = EmptySubscription()
+}
+
+//FIXME Create tests for HotPublisher
+internal open class HotPublisher<T>(private val setup: (Subscriber<T>) -> Unit = {}) : BasePublisher<T>(), Subscriber<T>, Subscription {
 
     private var subscriber: Subscriber<T> = BaseSubscriber { }
 
@@ -69,5 +79,3 @@ internal open class HotPublisher<T>(private val setup: (Subscriber<T>) -> Unit) 
     override fun onCancel() = subscriber.onCancel()
     override fun cancel() = onCancel()
 }
-
-internal class ColdPublisher<T> : HotPublisher<T>({}), Processor<T, T>

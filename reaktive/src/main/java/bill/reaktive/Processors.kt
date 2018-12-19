@@ -22,10 +22,6 @@
 
 package bill.reaktive
 
-object Processors {
-    fun <T> cold(): Processor<T, T> = ColdPublisher()
-}
-
 internal open class BaseProcessor<T>(protected val origin: Publisher<T>) : BasePublisher<T>(), Processor<T, T> {
 
     private lateinit var subscriber: Subscriber<T>

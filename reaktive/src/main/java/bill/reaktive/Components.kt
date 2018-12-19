@@ -58,3 +58,4 @@ interface Subscription {
 }
 
 interface Processor<T, V>: Subscriber<T>, Publisher<V>
+interface OpenPublisher<T>: Subscriber<T>, Publisher<T>

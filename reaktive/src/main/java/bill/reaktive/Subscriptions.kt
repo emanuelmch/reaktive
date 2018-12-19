@@ -36,3 +36,6 @@ class SubscriptionBag {
         disposables += subscription
     }
 }
+internal class EmptySubscription : Subscription {
+    override fun cancel() {}
+}
