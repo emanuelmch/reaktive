@@ -35,7 +35,7 @@ object Publishers {
         }
     }
 
-    fun <T> open(): OpenPublisher<T> = object : HotPublisher<T>(), OpenPublisher<T> {}
+    fun <T> open(): OpenPublisher<T> = OpenHotPublisher()
 
     fun <T> onSubscribe(setup: (Subscriber<T>) -> Unit): Publisher<T> = HotPublisher(setup)
 }
@@ -78,4 +78,33 @@ internal open class HotPublisher<T>(private val setup: (Subscriber<T>) -> Unit =
     override fun onComplete() = subscriber.onComplete()
     override fun onCancel() = subscriber.onCancel()
     override fun cancel() = onCancel()
+}
+
+//FIXME Create (more) tests for OpenHotPublisher (probably the same ones as HotPublisher`s)
+internal class OpenHotPublisher<T> : BasePublisher<T>(), OpenPublisher<T> {
+
+    private var subscriber: Subscriber<T>? = null
+
+    override fun subscribe(subscriber: Subscriber<T>): Subscription {
+        assert(this.subscriber == null) { "This OpenHotPublisher already has a subscriber!" }
+        this.subscriber = subscriber
+        return object : Subscription {
+            override fun cancel() = onCancel()
+        }
+    }
+
+    override fun onNext(element: T) = subscriber?.onNext(element) ?: Unit
+
+    override fun onComplete() {
+        TODO("not implemented")
+    }
+
+    override fun onCancel() {
+        subscriber?.let {
+            it.onCancel()
+            subscriber = null
+        }
+    }
+
+    override fun hasSubscriber() = subscriber != null
 }

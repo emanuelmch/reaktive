@@ -45,3 +45,27 @@ class PublishersTests {
         assertThat(hasBeenCalled, `is`(true))
     }
 }
+
+class OpenHotPublisherTests {
+
+    @Test
+    fun `Allows one subscription`() {
+        Publishers
+                .open<Any>()
+                .subscribe()
+    }
+
+    @Test(expected = AssertionError::class)
+    fun `Doesn't allow two concurrent subscriptions`() {
+        val publisher = Publishers.open<Any>()
+        publisher.subscribe()
+        publisher.subscribe()
+    }
+
+    @Test
+    fun `Allows a second subscription after first one has been canceled`() {
+        val publisher = Publishers.open<Any>()
+        publisher.subscribe().cancel()
+        publisher.subscribe()
+    }
+}
