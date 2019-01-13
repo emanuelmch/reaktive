@@ -24,16 +24,25 @@ package bill.reaktive
 
 import java.util.concurrent.CountDownLatch
 
-internal class BaseSubscriber<T>(private val onNextFunction: (T) -> Unit) : Subscriber<T> {
+internal class BaseSubscriber<T>(private val onNextFunction: (T) -> Unit,
+                                 private val onErrorFunction: (Throwable) -> Unit = Throwable::printStackTrace) : Subscriber<T> {
 
     override fun onNext(element: T) {
-        onNextFunction(element)
+        try {
+            onNextFunction(element)
+        } catch (t: Throwable) {
+            onError(t)
+        }
     }
 
     override fun onComplete() {
     }
 
     override fun onCancel() {
+    }
+
+    override fun onError(error: Throwable) {
+        onErrorFunction(error)
     }
 }
 
@@ -57,6 +66,10 @@ internal class BlockingLastSubscriber<T> : Subscriber<T> {
         countDownLatch.countDown()
     }
 
+    override fun onError(error: Throwable) {
+        error.printStackTrace()
+    }
+
     fun subscribeTo(publisher: Publisher<T>): T {
         publisher.subscribe(this)
 
@@ -70,13 +83,17 @@ internal class BlockingLastSubscriber<T> : Subscriber<T> {
 
 class TestSubscriber<T> internal constructor(publisher: Publisher<T>) {
 
-    private val emittedValues = mutableListOf<T>()
     private val subscription: Subscription
+    private val emittedValues = mutableListOf<T>()
+    val emittedErrors = mutableSetOf<Throwable>()
 
     init {
-        subscription = publisher.subscribe { this.emittedValues += it }
+        subscription = publisher.subscribe(BaseSubscriber(
+                { this.emittedValues += it },
+                { this.emittedErrors += it }))
     }
 
+    // FIXME: This should be called assertEmittedValues
     fun assertValuesOnly(vararg elements: T): TestSubscriber<T> {
         if (elements.toList() != emittedValues) {
             // FIXME: Should have a better error message
@@ -93,6 +110,16 @@ class TestSubscriber<T> internal constructor(publisher: Publisher<T>) {
 
     // FIXME: Find out how to handle errors
     fun assertNoErrors(): TestSubscriber<T> {
+        return this
+    }
+
+    inline fun <reified E : Throwable> assertError(): TestSubscriber<T> {
+        when {
+            emittedErrors.isEmpty() -> throw AssertionError("Expected [${E::class}] but no errors have been emitted")
+            emittedErrors.size > 1 -> throw AssertionError("Expected single error [${E::class}] but multiple errors have been emitted: [$emittedErrors]")
+            emittedErrors.first() !is E -> throw AssertionError("Expected single error [${E::class}] but only [${emittedErrors.first()}] has been emitted")
+        }
+
         return this
     }
 }

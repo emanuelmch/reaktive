@@ -34,6 +34,7 @@ internal open class BaseProcessor<T>(protected val origin: Publisher<T>) : BaseP
     override fun onNext(element: T) = subscriber.onNext(element)
     override fun onComplete() = subscriber.onComplete()
     override fun onCancel() = subscriber.onCancel()
+    override fun onError(error: Throwable) = subscriber.onError(error)
 }
 
 internal abstract class BaseMappingProcessor<T, V>(private val origin: Publisher<T>) : BasePublisher<V>(), Processor<T, V> {
@@ -49,6 +50,7 @@ internal abstract class BaseMappingProcessor<T, V>(private val origin: Publisher
     override fun onNext(element: T) = subscriber.onNext(map(element))
     override fun onComplete() = subscriber.onComplete()
     override fun onCancel() = subscriber.onCancel()
+    override fun onError(error: Throwable) = subscriber.onError(error)
 }
 
 internal class DistinctUntilChangedProcessor<T>(origin: Publisher<T>) : BaseProcessor<T>(origin) {

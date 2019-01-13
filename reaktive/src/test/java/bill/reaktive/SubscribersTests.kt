@@ -22,7 +22,7 @@
 
 package bill.reaktive
 
-import org.hamcrest.CoreMatchers.`is`
+import org.hamcrest.CoreMatchers.*
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.Test
 
@@ -33,5 +33,17 @@ class SubscribersTests {
         val result = Publishers.elements(1, 2, 3).blockingLast()
 
         assertThat(result, `is`(3))
+    }
+
+    @Test
+    fun `Exception during signal handling should be converted into error signals`() {
+        var error: Throwable? = null
+        val subscriber = BaseSubscriber<Any>(
+                { throw UnsupportedOperationException("Testing") },
+                { error = it })
+        Publishers.elements<Any>(1)
+                .subscribe(subscriber)
+
+        assertThat(error, `is`(not(nullValue())))
     }
 }

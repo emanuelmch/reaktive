@@ -68,4 +68,13 @@ class OpenHotPublisherTests {
         publisher.subscribe().cancel()
         publisher.subscribe()
     }
+
+    @Test
+    fun `Open Publishers should forward error signals to the subscriber`() {
+        val publisher = Publishers.open<Any>()
+        val subscriber = publisher.test()
+
+        publisher.onError(UnsupportedOperationException("Testing"))
+        subscriber.assertError<UnsupportedOperationException>()
+    }
 }

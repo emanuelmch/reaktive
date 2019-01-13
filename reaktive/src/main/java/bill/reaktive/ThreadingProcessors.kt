@@ -43,6 +43,11 @@ internal class SignalOnThreadProcessor<T>(origin: Publisher<T>, private val thre
         threadWorker.dispose()
         super.onComplete()
     }
+
+    override fun onError(error: Throwable) {
+        threadWorker.dispose()
+        super.onError(error)
+    }
 }
 
 internal interface ThreadWorker {

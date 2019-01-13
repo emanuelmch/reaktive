@@ -51,6 +51,7 @@ interface Subscriber<T> {
     fun onNext(element : T)
     fun onComplete()
     fun onCancel()
+    fun onError(error: Throwable)
 }
 
 interface Subscription {

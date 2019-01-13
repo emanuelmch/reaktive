@@ -66,7 +66,7 @@ internal class EmptyPublisher<T> : BasePublisher<T>() {
 //FIXME Create tests for HotPublisher
 internal open class HotPublisher<T>(private val setup: (Subscriber<T>) -> Unit = {}) : BasePublisher<T>(), Subscriber<T>, Subscription {
 
-    private var subscriber: Subscriber<T> = BaseSubscriber { }
+    private var subscriber: Subscriber<T> = BaseSubscriber({ })
 
     override fun subscribe(subscriber: Subscriber<T>): Subscription {
         this.subscriber = subscriber
@@ -78,6 +78,7 @@ internal open class HotPublisher<T>(private val setup: (Subscriber<T>) -> Unit =
     override fun onComplete() = subscriber.onComplete()
     override fun onCancel() = subscriber.onCancel()
     override fun cancel() = onCancel()
+    override fun onError(error: Throwable) = subscriber.onError(error)
 }
 
 //FIXME Create (more) tests for OpenHotPublisher (probably the same ones as HotPublisher`s)
@@ -103,6 +104,15 @@ internal class OpenHotPublisher<T> : BasePublisher<T>(), OpenPublisher<T> {
         subscriber?.let {
             it.onCancel()
             subscriber = null
+        }
+    }
+
+    override fun onError(error: Throwable) {
+        val s = subscriber
+        if (s != null) {
+            s.onError(error)
+        } else {
+            error.printStackTrace()
         }
     }
 
