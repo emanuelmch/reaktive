@@ -26,8 +26,6 @@ import java.util.concurrent.TimeUnit
 
 object Publishers {
 
-    fun <T> empty(): Publisher<T> = EmptyPublisher()
-
     fun <T> elements(vararg elements: T): Publisher<T> {
         return HotPublisher { streamer ->
             elements.forEach { streamer.onNext(it) }
@@ -57,11 +55,6 @@ internal abstract class BasePublisher<T> : Publisher<T> {
     override fun doOnNext(action: (T) -> Unit) = DoOnNextProcessor(this, action)
     override fun doOnCancel(action: () -> Unit) = DoOnCancelProcessor(this, action)
     override fun doOnFinish(action: () -> Unit) = DoOnFinishProcessor(this, action)
-}
-
-//FIXME Create tests for EmptyPublisher
-internal class EmptyPublisher<T> : BasePublisher<T>() {
-    override fun subscribe(subscriber: Subscriber<T>) = EmptySubscription()
 }
 
 //FIXME Create tests for HotPublisher
