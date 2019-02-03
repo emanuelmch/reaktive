@@ -22,35 +22,23 @@
 
 package bill.reaktive
 
-internal open class BaseProcessor<T>(protected val origin: Publisher<T>) : BasePublisher<T>(), Processor<T, T> {
+import bill.reaktive.publishers.MappingSubscriberPublisher
+import bill.reaktive.publishers.SubscriberPublisher
 
-    private lateinit var subscriber: Subscriber<T>
+internal abstract class BaseProcessor<T>(protected val origin: Publisher<T>) : SubscriberPublisher<T>(), Processor<T, T> {
 
     override fun subscribe(subscriber: Subscriber<T>): Subscription {
         this.subscriber = subscriber
         return origin.subscribe(this)
     }
-
-    override fun onNext(element: T) = subscriber.onNext(element)
-    override fun onComplete() = subscriber.onComplete()
-    override fun onCancel() = subscriber.onCancel()
-    override fun onError(error: Throwable) = subscriber.onError(error)
 }
 
-internal abstract class BaseMappingProcessor<T, V>(private val origin: Publisher<T>) : BasePublisher<V>(), Processor<T, V> {
-
-    private lateinit var subscriber: Subscriber<V>
-    protected abstract fun map(element: T): V
+internal abstract class BaseMappingProcessor<T, V>(private val origin: Publisher<T>) : MappingSubscriberPublisher<T, V>(), Processor<T, V> {
 
     override fun subscribe(subscriber: Subscriber<V>): Subscription {
         this.subscriber = subscriber
         return origin.subscribe(this)
     }
-
-    override fun onNext(element: T) = subscriber.onNext(map(element))
-    override fun onComplete() = subscriber.onComplete()
-    override fun onCancel() = subscriber.onCancel()
-    override fun onError(error: Throwable) = subscriber.onError(error)
 }
 
 internal class DistinctUntilChangedProcessor<T>(origin: Publisher<T>) : BaseProcessor<T>(origin) {

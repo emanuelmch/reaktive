@@ -22,6 +22,7 @@
 
 package bill.reaktive
 
+import bill.reaktive.publishers.HotPublisher
 import java.util.concurrent.TimeUnit
 
 object Publishers {
@@ -33,7 +34,7 @@ object Publishers {
         }
     }
 
-    fun <T> open(): OpenPublisher<T> = OpenHotPublisher()
+    fun <T> open(): OpenPublisher<T> = HotPublisher()
 
     fun <T> onSubscribe(setup: (Subscriber<T>) -> Unit): Publisher<T> = HotPublisher(setup)
 }
@@ -55,58 +56,4 @@ internal abstract class BasePublisher<T> : Publisher<T> {
     override fun doOnNext(action: (T) -> Unit) = DoOnNextProcessor(this, action)
     override fun doOnCancel(action: () -> Unit) = DoOnCancelProcessor(this, action)
     override fun doOnFinish(action: () -> Unit) = DoOnFinishProcessor(this, action)
-}
-
-//FIXME Create tests for HotPublisher
-internal open class HotPublisher<T>(private val setup: (Subscriber<T>) -> Unit = {}) : BasePublisher<T>(), Subscriber<T>, Subscription {
-
-    private var subscriber: Subscriber<T> = BaseSubscriber({ })
-
-    override fun subscribe(subscriber: Subscriber<T>): Subscription {
-        this.subscriber = subscriber
-        setup(this)
-        return this
-    }
-
-    override fun onNext(element: T) = subscriber.onNext(element)
-    override fun onComplete() = subscriber.onComplete()
-    override fun onCancel() = subscriber.onCancel()
-    override fun cancel() = onCancel()
-    override fun onError(error: Throwable) = subscriber.onError(error)
-}
-
-//FIXME Create (more) tests for OpenHotPublisher (probably the same ones as HotPublisher`s)
-internal class OpenHotPublisher<T> : BasePublisher<T>(), OpenPublisher<T> {
-
-    private var subscriber: Subscriber<T>? = null
-
-    override fun subscribe(subscriber: Subscriber<T>): Subscription {
-        assert(this.subscriber == null) { "This OpenHotPublisher already has a subscriber!" }
-        this.subscriber = subscriber
-        return object : Subscription {
-            override fun cancel() = onCancel()
-        }
-    }
-
-    override fun onNext(element: T) = subscriber?.onNext(element) ?: Unit
-
-    override fun onComplete() {
-        TODO("not implemented")
-    }
-
-    override fun onCancel() {
-        subscriber?.let {
-            it.onCancel()
-            subscriber = null
-        }
-    }
-
-    override fun onError(error: Throwable) {
-        val s = subscriber
-        if (s != null) {
-            s.onError(error)
-        } else {
-            error.printStackTrace()
-        }
-    }
 }

@@ -24,6 +24,7 @@ package bill.reaktive
 
 import java.util.concurrent.CountDownLatch
 
+//FIXME: Check if we can kill this class
 internal class BaseSubscriber<T>(private val onNextFunction: (T) -> Unit,
                                  private val onErrorFunction: (Throwable) -> Unit = Throwable::printStackTrace) : Subscriber<T> {
 

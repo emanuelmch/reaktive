@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Emanuel Machado da Silva <emanuel.mch@gmail.com>
+ * Copyright (c) 2019 Emanuel Machado da Silva <emanuel.mch@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,40 +20,22 @@
  * SOFTWARE.
  */
 
-package bill.reaktive
+package bill.reaktive.publishers
 
-import org.hamcrest.CoreMatchers.`is`
-import org.hamcrest.MatcherAssert.assertThat
-import org.junit.Test
+import bill.reaktive.OpenPublisher
+import bill.reaktive.Subscriber
+import bill.reaktive.Subscription
 
-class PublishersTests {
+//FIXME Create (more) tests for HotPublisher
+internal class HotPublisher<T>(
+        private val setup: (Subscriber<T>) -> Unit = {}
+) : SubscriberPublisher<T>(), OpenPublisher<T> {
 
-    @Test
-    fun `onSubscribe creates a Publisher you can subscribe to`() {
-        Publishers
-                .onSubscribe<Unit> { }
-                .subscribe()
-    }
-
-    @Test
-    fun `onSubscribe creates a Publisher that runs the setup function when you subscribe to it`() {
-        var hasBeenCalled = false
-        Publishers
-                .onSubscribe<Unit> { hasBeenCalled = true }
-                .subscribe()
-
-        assertThat(hasBeenCalled, `is`(true))
-    }
-}
-
-class OpenPublisherTests {
-
-    @Test
-    fun `Open Publishers should forward error signals to the subscriber`() {
-        val publisher = Publishers.open<Any>()
-        val subscriber = publisher.test()
-
-        publisher.onError(UnsupportedOperationException("Testing"))
-        subscriber.assertError<UnsupportedOperationException>()
+    override fun subscribe(subscriber: Subscriber<T>): Subscription {
+        this.subscriber = subscriber
+        setup(this)
+        return object : Subscription {
+            override fun cancel() = onCancel()
+        }
     }
 }
