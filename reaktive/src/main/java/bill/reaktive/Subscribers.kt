@@ -109,8 +109,10 @@ class TestSubscriber<T> internal constructor(publisher: Publisher<T>) {
         return this
     }
 
-    // FIXME: Find out how to handle errors
     fun assertNoErrors(): TestSubscriber<T> {
+        if (emittedErrors.isNotEmpty()) {
+            throw AssertionError("Expected no errors, but there were ${emittedErrors.size} errors")
+        }
         return this
     }
 
