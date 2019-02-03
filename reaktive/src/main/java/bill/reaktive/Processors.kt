@@ -26,7 +26,6 @@ object Processors {
     fun <T> cold(): Processor<T, T> = ColdPublisher()
 }
 
-
 internal open class BaseProcessor<T>(protected val origin: Publisher<T>) : BasePublisher<T>(), Processor<T, T> {
 
     private lateinit var subscriber: Subscriber<T>
@@ -56,7 +55,6 @@ internal abstract class BaseMappingProcessor<T, V>(private val origin: Publisher
     override fun onCancel() = subscriber.onCancel()
 }
 
-
 internal class DistinctUntilChangedProcessor<T>(origin: Publisher<T>) : BaseProcessor<T>(origin) {
 
     override fun subscribe(subscriber: Subscriber<T>): Subscription {
@@ -73,7 +71,6 @@ internal class DistinctUntilChangedProcessor<T>(origin: Publisher<T>) : BaseProc
 internal class MapperProcessor<T, V>(origin: Publisher<T>, private val mapper: (T) -> V) : BaseMappingProcessor<T, V>(origin) {
 
     override fun map(element: T) = mapper(element)
-
 }
 
 internal class StartWithProcessor<T>(origin: Publisher<T>, private val initialElement: T) : BaseProcessor<T>(origin) {

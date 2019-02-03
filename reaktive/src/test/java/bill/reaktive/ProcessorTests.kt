@@ -24,7 +24,6 @@ package bill.reaktive
 
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
-import org.junit.Assert
 import org.junit.Test
 
 class ProcessorTests {

@@ -24,7 +24,7 @@ package bill.reaktive
 
 class SubscriptionBag {
 
-    private val disposables = mutableListOf<Subscription>()
+    private val disposables = mutableSetOf<Subscription>()
 
     // TODO: Should make this mutation-safe
     fun clear() {

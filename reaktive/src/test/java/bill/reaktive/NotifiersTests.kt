@@ -35,8 +35,8 @@ class NotifiersTests {
     fun `onSubscribe creates a Notifier that runs the setup function when you subscribe to it`() {
         var hasBeenCalled = false
         Notifiers
-            .onSubscribe { hasBeenCalled = true }
-            .subscribe()
+                .onSubscribe { hasBeenCalled = true }
+                .subscribe()
 
         assertThat(hasBeenCalled, `is`(true))
     }
@@ -51,9 +51,9 @@ class NotifiersTests {
     fun `doOnFinish runs its function when the Publisher is cancelled`() {
         var hasBeenCalled = false
         Notifiers.onSubscribe { }
-            .doOnFinish { hasBeenCalled = true }
-            .subscribe()
-            .cancel()
+                .doOnFinish { hasBeenCalled = true }
+                .subscribe()
+                .cancel()
 
         assertThat(hasBeenCalled, `is`(true))
     }
@@ -62,8 +62,8 @@ class NotifiersTests {
     fun `doOnFinish doesn't run its function when the Publisher is left open`() {
         var hasBeenCalled = false
         Notifiers.onSubscribe { }
-            .doOnFinish { hasBeenCalled = true }
-            .subscribe()
+                .doOnFinish { hasBeenCalled = true }
+                .subscribe()
 
         assertThat(hasBeenCalled, `is`(false))
     }
@@ -76,7 +76,7 @@ class `Notifiers - toPublisher Tests` {
     fun `toPublisher doesn't subscribes to the source when not subscribed to`() {
         var hasBeenCalled = false
         Notifiers.onSubscribe { hasBeenCalled = true }
-            .toPublisher { }
+                .toPublisher { }
 
         assertThat(hasBeenCalled, `is`(false))
     }
@@ -85,8 +85,8 @@ class `Notifiers - toPublisher Tests` {
     fun `toPublisher subscribes to the source when subscribed to`() {
         var hasBeenCalled = false
         Notifiers.onSubscribe { hasBeenCalled = true }
-            .toPublisher { }
-            .subscribe()
+                .toPublisher { }
+                .subscribe()
 
         assertThat(hasBeenCalled, `is`(true))
     }
@@ -95,8 +95,8 @@ class `Notifiers - toPublisher Tests` {
     fun `toPublisher cancels the source when cancelled`() {
         val notifier = MockNotifier()
         notifier.toPublisher {}
-            .subscribe()
-            .cancel()
+                .subscribe()
+                .cancel()
 
         assertThat(notifier.cancelled, `is`(true))
     }
@@ -110,12 +110,12 @@ class `Notifiers - toPublisher Tests` {
     @Test
     fun `toPublisher emits the value created by the factory function`() {
         Notifiers
-            .onSubscribe {
-                it.onNext()
-                it.onNext()
-            }
-            .toPublisher { 1 }
-            .test()
-            .assertValuesOnly(1, 1)
+                .onSubscribe {
+                    it.onNext()
+                    it.onNext()
+                }
+                .toPublisher { 1 }
+                .test()
+                .assertValuesOnly(1, 1)
     }
 }
