@@ -23,6 +23,7 @@
 package bill.reaktive
 
 import org.hamcrest.CoreMatchers.`is`
+import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.Test
 
@@ -126,5 +127,16 @@ class ProcessorTests {
                 .subscribe()
 
         assertThat(hasBeenCalled, `is`(false))
+    }
+
+    @Test
+    fun `filter should filter out non-matching signals`() {
+        val results = mutableListOf<Int>()
+
+        Publishers.elements(1, 2, 3, 4, 5, 6, 7, 8, 9)
+                .filter { it.rem(3) == 0 }
+                .subscribe { results += it }
+
+        assertThat(results, `is`(equalTo(listOf(3, 6, 9))))
     }
 }

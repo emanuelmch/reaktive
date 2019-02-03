@@ -66,6 +66,15 @@ internal class DistinctUntilChangedProcessor<T>(origin: Publisher<T>) : BaseProc
     }
 }
 
+internal class FilterProcessor<T>(origin: Publisher<T>, private val filter: (T) -> Boolean): BaseProcessor<T>(origin) {
+
+    override fun onNext(element: T) {
+        if (filter(element)) {
+            super.onNext(element)
+        }
+    }
+}
+
 internal class MapperProcessor<T, V>(origin: Publisher<T>, private val mapper: (T) -> V) : BaseMappingProcessor<T, V>(origin) {
 
     override fun map(element: T) = mapper(element)

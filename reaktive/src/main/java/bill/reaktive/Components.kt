@@ -32,6 +32,7 @@ interface Publisher<T> {
 
     // Processors
     fun distinctUntilChanged(): Publisher<T>
+    fun filter(function: (T) -> Boolean): Publisher<T>
     fun <V> map(function: (T) -> V): Publisher<V>
     fun startWith(element: T): Publisher<T>
 

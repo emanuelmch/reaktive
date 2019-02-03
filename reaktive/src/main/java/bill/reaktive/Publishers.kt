@@ -45,6 +45,7 @@ internal abstract class BasePublisher<T> : Publisher<T> {
     override fun test() = TestSubscriber(this)
 
     override fun distinctUntilChanged() = DistinctUntilChangedProcessor(this)
+    override fun filter(function: (T) -> Boolean) = FilterProcessor(this, function)
     override fun <V> map(function: (T) -> V) = MapperProcessor(this, function)
     override fun startWith(element: T) = StartWithProcessor(this, element)
 
