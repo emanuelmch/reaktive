@@ -27,9 +27,9 @@ import java.util.concurrent.TimeUnit
 object Publishers {
 
     fun <T> elements(vararg elements: T): Publisher<T> {
-        return HotPublisher { streamer ->
-            elements.forEach { streamer.onNext(it) }
-            streamer.onComplete()
+        return HotPublisher { subscriber ->
+            elements.forEach(subscriber::onNext)
+            subscriber.onComplete()
         }
     }
 
