@@ -109,6 +109,4 @@ internal class OpenHotPublisher<T> : BasePublisher<T>(), OpenPublisher<T> {
             error.printStackTrace()
         }
     }
-
-    override fun hasSubscriber() = subscriber != null
 }
