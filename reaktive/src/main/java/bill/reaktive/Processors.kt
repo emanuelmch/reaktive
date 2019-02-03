@@ -55,13 +55,12 @@ internal abstract class BaseMappingProcessor<T, V>(private val origin: Publisher
 
 internal class DistinctUntilChangedProcessor<T>(origin: Publisher<T>) : BaseProcessor<T>(origin) {
 
-    override fun subscribe(subscriber: Subscriber<T>): Subscription {
-        var lastEmission: T? = null
-        return origin.subscribe {
-            if (it != lastEmission) {
-                lastEmission = it
-                subscriber.onNext(it)
-            }
+    private var lastEmission: T? = null
+
+    override fun onNext(element: T) {
+        if (element != lastEmission) {
+            lastEmission = element
+            super.onNext(element)
         }
     }
 }
