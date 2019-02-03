@@ -45,19 +45,19 @@ internal class DistinctUntilChangedProcessor<T>(origin: Publisher<T>) : BaseProc
 
     private var lastEmission: T? = null
 
-    override fun onNext(element: T) {
+    override fun safeOnNext(element: T) {
         if (element != lastEmission) {
             lastEmission = element
-            super.onNext(element)
+            super.safeOnNext(element)
         }
     }
 }
 
 internal class FilterProcessor<T>(origin: Publisher<T>, private val filter: (T) -> Boolean): BaseProcessor<T>(origin) {
 
-    override fun onNext(element: T) {
+    override fun safeOnNext(element: T) {
         if (filter(element)) {
-            super.onNext(element)
+            super.safeOnNext(element)
         }
     }
 }
@@ -77,9 +77,9 @@ internal class StartWithProcessor<T>(origin: Publisher<T>, private val initialEl
 
 internal class DoOnNextProcessor<T>(origin: Publisher<T>, private val action: (T) -> Unit) : BaseProcessor<T>(origin) {
 
-    override fun onNext(element: T) {
+    override fun safeOnNext(element: T) {
         action(element)
-        super.onNext(element)
+        super.safeOnNext(element)
     }
 }
 

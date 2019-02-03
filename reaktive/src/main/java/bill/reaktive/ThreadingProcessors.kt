@@ -28,9 +28,9 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 internal class SignalOnThreadProcessor<T>(origin: Publisher<T>, private val threadWorker: ThreadWorker) : BaseProcessor<T>(origin) {
-    override fun onNext(element: T) {
+    override fun safeOnNext(element: T) {
         threadWorker.run {
-            super.onNext(element)
+            super.safeOnNext(element)
         }
     }
 
@@ -92,10 +92,10 @@ internal class DelayProcessor<T>(origin: Publisher<T>,
                                  private val delay: Long,
                                  private val unit: TimeUnit) : BaseProcessor<T>(origin) {
 
-    override fun onNext(element: T) {
+    override fun safeOnNext(element: T) {
         if (TestMode.isEnabled.not()) {
             Thread.sleep(unit.toMillis(delay))
         }
-        super.onNext(element)
+        super.safeOnNext(element)
     }
 }
