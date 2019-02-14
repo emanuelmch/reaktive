@@ -28,7 +28,7 @@ class SubscriptionBag {
 
     // TODO: Should make this mutation-safe
     fun clear() {
-        disposables.forEach(Subscription::cancel)
+        disposables.forEach(Subscription::onCancel)
         disposables.clear()
     }
 

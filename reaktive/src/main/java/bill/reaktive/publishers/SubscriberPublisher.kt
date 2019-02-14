@@ -22,41 +22,34 @@
 
 package bill.reaktive.publishers
 
-import bill.reaktive.BasePublisher
-import bill.reaktive.Subscriber
+import bill.reaktive.*
 
-internal abstract class SubscriberPublisher<T> : BasePublisher<T>(), Subscriber<T> {
-    protected var subscriber: Subscriber<T>? = null
+internal open class SubscriberPublisher<T, V>(
+        private val origin: Publisher<T>? = null,
+        private val setup: ((Subscriber<T>) -> Unit)? = null,
+        private val mapper: ((T) -> V)? = null
+) : BasePublisher<V>(), OpenPublisher<T, V>, Subscriber<T>, Subscription {
+    private lateinit var subscriber: Subscriber<V>
+
+    open fun safeOnNext(element: V) = subscriber.onNext(element)
+    override fun onComplete() = subscriber.onComplete()
+    override fun onCancel() = subscriber.onCancel()
+    override fun onError(error: Throwable) = subscriber.onError(error)
 
     final override fun onNext(element: T) {
         try {
-            safeOnNext(element)
-        } catch (ex: Exception) {
+            safeOnNext(map(element))
+        } catch (ex: Throwable) {
             onError(ex)
         }
     }
 
-    open fun safeOnNext(element: T) = subscriber?.onNext(element) ?: Unit
-    override fun onComplete() = subscriber?.onComplete() ?: Unit
-    override fun onCancel() = subscriber?.onCancel() ?: Unit
-    override fun onError(error: Throwable) = subscriber?.onError(error) ?: Unit
-}
+    @Suppress("UNCHECKED_CAST")
+    private fun map(element: T) = mapper?.invoke(element) ?: element as V
 
-internal abstract class MappingSubscriberPublisher<T, V> : BasePublisher<V>(), Subscriber<T> {
-    protected var subscriber: Subscriber<V>? = null
-
-    protected abstract fun map(element: T): V
-
-    final override fun onNext(element: T) {
-        try {
-            safeOnNext(element)
-        } catch (ex: Exception) {
-            onError(ex)
-        }
+    override fun subscribe(subscriber: Subscriber<V>): Subscription {
+        this.subscriber = subscriber
+        setup?.invoke(this)
+        return origin?.subscribe(this) ?: this
     }
-
-    open fun safeOnNext(element: T) = subscriber?.onNext(map(element)) ?: Unit
-    override fun onComplete() = subscriber?.onComplete() ?: Unit
-    override fun onCancel() = subscriber?.onCancel() ?: Unit
-    override fun onError(error: Throwable) = subscriber?.onError(error) ?: Unit
 }

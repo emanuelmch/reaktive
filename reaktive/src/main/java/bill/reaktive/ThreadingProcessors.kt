@@ -24,10 +24,11 @@ package bill.reaktive
 
 import android.os.Handler
 import android.os.Looper
+import bill.reaktive.publishers.SubscriberPublisher
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
-internal class SignalOnThreadProcessor<T>(origin: Publisher<T>, private val threadWorker: ThreadWorker) : BaseProcessor<T>(origin) {
+internal class SignalOnThreadProcessor<T>(origin: Publisher<T>, private val threadWorker: ThreadWorker) : SubscriberPublisher<T, T>(origin) {
     override fun safeOnNext(element: T) {
         threadWorker.run {
             super.safeOnNext(element)
@@ -90,7 +91,7 @@ internal class ForegroundThreadWorker : ThreadWorker {
 
 internal class DelayProcessor<T>(origin: Publisher<T>,
                                  private val delay: Long,
-                                 private val unit: TimeUnit) : BaseProcessor<T>(origin) {
+                                 private val unit: TimeUnit) : SubscriberPublisher<T, T>(origin) {
 
     override fun safeOnNext(element: T) {
         if (TestMode.isEnabled.not()) {

@@ -89,8 +89,8 @@ class TestSubscriber<T> internal constructor(publisher: Publisher<T>) {
         return this
     }
 
-    fun cancel(): TestSubscriber<T> {
-        subscription.cancel()
+    fun onCancel(): TestSubscriber<T> {
+        subscription.onCancel()
         return this
     }
 

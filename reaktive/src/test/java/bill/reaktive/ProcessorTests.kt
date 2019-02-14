@@ -92,7 +92,7 @@ class ProcessorTests {
         Publishers.onSubscribe<Unit> { }
                 .doOnFinish { hasBeenCalled = true }
                 .subscribe()
-                .cancel()
+                .onCancel()
 
         assertThat(hasBeenCalled, `is`(true))
     }
@@ -113,7 +113,7 @@ class ProcessorTests {
         Publishers.onSubscribe<Unit> { }
                 .doOnCancel { hasBeenCalled = true }
                 .subscribe()
-                .cancel()
+                .onCancel()
 
         assertThat(hasBeenCalled, `is`(true))
     }

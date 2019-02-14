@@ -22,26 +22,10 @@
 
 package bill.reaktive
 
-import bill.reaktive.publishers.MappingSubscriberPublisher
 import bill.reaktive.publishers.SubscriberPublisher
 
-internal abstract class BaseProcessor<T>(protected val origin: Publisher<T>) : SubscriberPublisher<T>(), Processor<T, T> {
 
-    override fun subscribe(subscriber: Subscriber<T>): Subscription {
-        this.subscriber = subscriber
-        return origin.subscribe(this)
-    }
-}
-
-internal abstract class BaseMappingProcessor<T, V>(private val origin: Publisher<T>) : MappingSubscriberPublisher<T, V>(), Processor<T, V> {
-
-    override fun subscribe(subscriber: Subscriber<V>): Subscription {
-        this.subscriber = subscriber
-        return origin.subscribe(this)
-    }
-}
-
-internal class DistinctUntilChangedProcessor<T>(origin: Publisher<T>) : BaseProcessor<T>(origin) {
+internal class DistinctUntilChangedProcessor<T>(origin: Publisher<T>) : SubscriberPublisher<T, T>(origin) {
 
     private var lastEmission: T? = null
 
@@ -53,7 +37,7 @@ internal class DistinctUntilChangedProcessor<T>(origin: Publisher<T>) : BaseProc
     }
 }
 
-internal class FilterProcessor<T>(origin: Publisher<T>, private val filter: (T) -> Boolean) : BaseProcessor<T>(origin) {
+internal class FilterProcessor<T>(origin: Publisher<T>, private val filter: (T) -> Boolean) : SubscriberPublisher<T, T>(origin) {
 
     override fun safeOnNext(element: T) {
         if (filter(element)) {
@@ -62,12 +46,10 @@ internal class FilterProcessor<T>(origin: Publisher<T>, private val filter: (T) 
     }
 }
 
-internal class MapperProcessor<T, V>(origin: Publisher<T>, private val mapper: (T) -> V) : BaseMappingProcessor<T, V>(origin) {
+internal class MapperProcessor<T, V>(origin: Publisher<T>, mapper: (T) -> V)
+    : SubscriberPublisher<T, V>(origin, mapper = mapper)
 
-    override fun map(element: T) = mapper(element)
-}
-
-internal class StartWithProcessor<T>(origin: Publisher<T>, private val initialElement: T) : BaseProcessor<T>(origin) {
+internal class StartWithProcessor<T>(origin: Publisher<T>, private val initialElement: T) : SubscriberPublisher<T, T>(origin) {
 
     override fun subscribe(subscriber: Subscriber<T>): Subscription {
         subscriber.onNext(initialElement)
@@ -75,7 +57,7 @@ internal class StartWithProcessor<T>(origin: Publisher<T>, private val initialEl
     }
 }
 
-internal class DoOnNextProcessor<T>(origin: Publisher<T>, private val action: (T) -> Unit) : BaseProcessor<T>(origin) {
+internal class DoOnNextProcessor<T>(origin: Publisher<T>, private val action: (T) -> Unit) : SubscriberPublisher<T, T>(origin) {
 
     override fun safeOnNext(element: T) {
         action(element)
@@ -83,7 +65,7 @@ internal class DoOnNextProcessor<T>(origin: Publisher<T>, private val action: (T
     }
 }
 
-internal class DoOnCancelProcessor<T>(origin: Publisher<T>, private val action: () -> Unit) : BaseProcessor<T>(origin) {
+internal class DoOnCancelProcessor<T>(origin: Publisher<T>, private val action: () -> Unit) : SubscriberPublisher<T, T>(origin) {
 
     override fun onCancel() {
         action()
@@ -91,7 +73,7 @@ internal class DoOnCancelProcessor<T>(origin: Publisher<T>, private val action: 
     }
 }
 
-internal class DoOnFinishProcessor<T>(origin: Publisher<T>, private val action: () -> Unit) : BaseProcessor<T>(origin) {
+internal class DoOnFinishProcessor<T>(origin: Publisher<T>, private val action: () -> Unit) : SubscriberPublisher<T, T>(origin) {
 
     override fun onComplete() {
         action()
@@ -104,7 +86,7 @@ internal class DoOnFinishProcessor<T>(origin: Publisher<T>, private val action: 
     }
 }
 
-internal class DoOnErrorProcessor<T>(origin: Publisher<T>, private val action: (Throwable) -> Unit) : BaseProcessor<T>(origin) {
+internal class DoOnErrorProcessor<T>(origin: Publisher<T>, private val action: (Throwable) -> Unit) : SubscriberPublisher<T, T>(origin) {
 
     override fun onError(error: Throwable) {
         action(error)

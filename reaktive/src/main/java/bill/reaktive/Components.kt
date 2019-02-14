@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit
 
 interface Publisher<T> {
     // Subscribing
-    fun subscribe(subscriber: Subscriber<T> = EmptySubscriber<T>()): Subscription
+    fun subscribe(subscriber: Subscriber<T> = EmptySubscriber()): Subscription
     fun test(): TestSubscriber<T>
 
     // Processors
@@ -59,8 +59,7 @@ interface Subscriber<T> {
 }
 
 interface Subscription {
-    fun cancel()
+    fun onCancel()
 }
 
-interface Processor<T, V> : Subscriber<T>, Publisher<V>
-interface OpenPublisher<T> : Subscriber<T>, Publisher<T>
+interface OpenPublisher<T, V> : Subscriber<T>, Publisher<V>

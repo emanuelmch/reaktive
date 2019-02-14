@@ -22,21 +22,21 @@
 
 package bill.reaktive
 
-import bill.reaktive.publishers.HotPublisher
+import bill.reaktive.publishers.SubscriberPublisher
 import java.util.concurrent.TimeUnit
 
 object Publishers {
 
     fun <T> elements(vararg elements: T): Publisher<T> {
-        return HotPublisher { subscriber ->
+        return SubscriberPublisher<T, T>(setup = { subscriber ->
             elements.forEach(subscriber::onNext)
             subscriber.onComplete()
-        }
+        })
     }
 
-    fun <T> open(): OpenPublisher<T> = HotPublisher()
+    fun <T> open(): OpenPublisher<T, T> = SubscriberPublisher()
 
-    fun <T> onSubscribe(setup: (Subscriber<T>) -> Unit): Publisher<T> = HotPublisher(setup)
+    fun <T> onSubscribe(setup: (Subscriber<T>) -> Unit): Publisher<T> = SubscriberPublisher(setup = setup)
 }
 
 internal abstract class BasePublisher<T> : Publisher<T> {
