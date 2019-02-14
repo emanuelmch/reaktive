@@ -38,11 +38,11 @@ class SubscribersTests {
     @Test
     fun `Exception during signal handling should be converted into error signals`() {
         var error: Throwable? = null
-        val subscriber = BaseSubscriber<Any>(
-                { throw UnsupportedOperationException("Testing") },
-                { error = it })
+
         Publishers.elements<Any>(1)
-                .subscribe(subscriber)
+                .doOnNext { throw UnsupportedOperationException("Testing") }
+                .doOnError { error = it }
+                .subscribe()
 
         assertThat(error, `is`(not(nullValue())))
     }

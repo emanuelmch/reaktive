@@ -40,7 +40,6 @@ object Publishers {
 }
 
 internal abstract class BasePublisher<T> : Publisher<T> {
-    override fun subscribe(onNext: (T) -> Unit) = subscribe(BaseSubscriber(onNext))
     override fun test() = TestSubscriber(this)
 
     override fun distinctUntilChanged() = DistinctUntilChangedProcessor(this)
@@ -56,4 +55,5 @@ internal abstract class BasePublisher<T> : Publisher<T> {
     override fun doOnNext(action: (T) -> Unit) = DoOnNextProcessor(this, action)
     override fun doOnCancel(action: () -> Unit) = DoOnCancelProcessor(this, action)
     override fun doOnFinish(action: () -> Unit) = DoOnFinishProcessor(this, action)
+    override fun doOnError(action: (Throwable) -> Unit) = DoOnErrorProcessor(this, action)
 }

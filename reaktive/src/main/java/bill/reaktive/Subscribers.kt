@@ -24,29 +24,6 @@ package bill.reaktive
 
 import java.util.concurrent.CountDownLatch
 
-//FIXME: Check if we can kill this class
-internal class BaseSubscriber<T>(private val onNextFunction: (T) -> Unit,
-                                 private val onErrorFunction: (Throwable) -> Unit = Throwable::printStackTrace) : Subscriber<T> {
-
-    override fun onNext(element: T) {
-        try {
-            onNextFunction(element)
-        } catch (t: Throwable) {
-            onError(t)
-        }
-    }
-
-    override fun onComplete() {
-    }
-
-    override fun onCancel() {
-    }
-
-    override fun onError(error: Throwable) {
-        onErrorFunction(error)
-    }
-}
-
 //FIXME: Make this thread-safe
 internal class BlockingLastSubscriber<T> : Subscriber<T> {
     private var latestValue: T? = null
@@ -82,6 +59,13 @@ internal class BlockingLastSubscriber<T> : Subscriber<T> {
     }
 }
 
+internal class EmptySubscriber<T> : Subscriber<T> {
+    override fun onNext(element: T) {}
+    override fun onComplete() {}
+    override fun onCancel() {}
+    override fun onError(error: Throwable) {}
+}
+
 class TestSubscriber<T> internal constructor(publisher: Publisher<T>) {
 
     private val subscription: Subscription
@@ -89,9 +73,10 @@ class TestSubscriber<T> internal constructor(publisher: Publisher<T>) {
     val emittedErrors = mutableSetOf<Throwable>()
 
     init {
-        subscription = publisher.subscribe(BaseSubscriber(
-                { this.emittedValues += it },
-                { this.emittedErrors += it }))
+        subscription = publisher
+                .doOnNext { this.emittedValues += it }
+                .doOnError { this.emittedErrors += it }
+                .subscribe()
     }
 
     // FIXME: This should be called assertEmittedValues

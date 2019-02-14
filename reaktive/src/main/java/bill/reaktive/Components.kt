@@ -26,30 +26,33 @@ import java.util.concurrent.TimeUnit
 
 interface Publisher<T> {
     // Subscribing
-    fun subscribe(onNext: (T) -> Unit = {}): Subscription
-    fun subscribe(subscriber: Subscriber<T>): Subscription
+    fun subscribe(subscriber: Subscriber<T> = EmptySubscriber<T>()): Subscription
     fun test(): TestSubscriber<T>
 
     // Processors
     fun distinctUntilChanged(): Publisher<T>
+
     fun filter(function: (T) -> Boolean): Publisher<T>
     fun <V> map(function: (T) -> V): Publisher<V>
     fun startWith(element: T): Publisher<T>
 
     // Threading Processors
     fun delay(delay: Long, unit: TimeUnit): Publisher<T>
+
     fun signalOnBackground(): Publisher<T>
     fun signalOnForeground(): Publisher<T>
     fun blockingLast(): T
 
     // Events
-    fun doOnNext(action: (T) -> Unit) : Publisher<T>
-    fun doOnCancel(action: () -> Unit) : Publisher<T>
+    fun doOnNext(action: (T) -> Unit): Publisher<T>
+
+    fun doOnCancel(action: () -> Unit): Publisher<T>
     fun doOnFinish(action: () -> Unit): Publisher<T>
+    fun doOnError(action: (Throwable) -> Unit): Publisher<T>
 }
 
 interface Subscriber<T> {
-    fun onNext(element : T)
+    fun onNext(element: T)
     fun onComplete()
     fun onCancel()
     fun onError(error: Throwable)
@@ -59,5 +62,5 @@ interface Subscription {
     fun cancel()
 }
 
-interface Processor<T, V>: Subscriber<T>, Publisher<V>
-interface OpenPublisher<T>: Subscriber<T>, Publisher<T>
+interface Processor<T, V> : Subscriber<T>, Publisher<V>
+interface OpenPublisher<T> : Subscriber<T>, Publisher<T>

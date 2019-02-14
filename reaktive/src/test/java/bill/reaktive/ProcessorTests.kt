@@ -135,7 +135,8 @@ class ProcessorTests {
 
         Publishers.elements(1, 2, 3, 4, 5, 6, 7, 8, 9)
                 .filter { it.rem(3) == 0 }
-                .subscribe { results += it }
+                .doOnNext { results += it }
+                .subscribe()
 
         assertThat(results, `is`(equalTo(listOf(3, 6, 9))))
     }

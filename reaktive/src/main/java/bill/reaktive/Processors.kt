@@ -53,7 +53,7 @@ internal class DistinctUntilChangedProcessor<T>(origin: Publisher<T>) : BaseProc
     }
 }
 
-internal class FilterProcessor<T>(origin: Publisher<T>, private val filter: (T) -> Boolean): BaseProcessor<T>(origin) {
+internal class FilterProcessor<T>(origin: Publisher<T>, private val filter: (T) -> Boolean) : BaseProcessor<T>(origin) {
 
     override fun safeOnNext(element: T) {
         if (filter(element)) {
@@ -71,7 +71,7 @@ internal class StartWithProcessor<T>(origin: Publisher<T>, private val initialEl
 
     override fun subscribe(subscriber: Subscriber<T>): Subscription {
         subscriber.onNext(initialElement)
-        return origin.subscribe(subscriber)
+        return super.subscribe(subscriber)
     }
 }
 
@@ -101,5 +101,12 @@ internal class DoOnFinishProcessor<T>(origin: Publisher<T>, private val action: 
     override fun onCancel() {
         action()
         super.onCancel()
+    }
+}
+
+internal class DoOnErrorProcessor<T>(origin: Publisher<T>, private val action: (Throwable) -> Unit) : BaseProcessor<T>(origin) {
+
+    override fun onError(error: Throwable) {
+        action(error)
     }
 }
