@@ -24,15 +24,22 @@ package bill.reaktive
 
 class SubscriptionBag {
 
-    private val disposables = mutableSetOf<Subscription>()
+    private val subscriptions = mutableSetOf<Subscription>()
 
-    // TODO: Should make this mutation-safe
     fun clear() {
-        disposables.forEach(Subscription::onCancel)
-        disposables.clear()
+        val atomicSubscriptions: HashSet<Subscription>
+
+        synchronized(subscriptions) {
+            atomicSubscriptions = HashSet(subscriptions)
+            subscriptions.clear()
+        }
+
+        atomicSubscriptions.forEach(Subscription::onCancel)
     }
 
     operator fun plusAssign(subscription: Subscription) {
-        disposables += subscription
+        synchronized(subscriptions) {
+            subscriptions += subscription
+        }
     }
 }
