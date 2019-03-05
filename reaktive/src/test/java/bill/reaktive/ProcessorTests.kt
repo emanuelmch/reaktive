@@ -25,6 +25,7 @@ package bill.reaktive
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.MatcherAssert.assertThat
+import org.junit.Ignore
 import org.junit.Test
 
 class ProcessorTests {
@@ -77,6 +78,22 @@ class ProcessorTests {
     }
 
     @Test
+    fun `doOnComplete runs its function when the Publisher completes`() {
+        val open = Publishers.open<Unit>()
+        val subscription = open.test()
+
+        open.onComplete()
+        subscription.assertComplete()
+    }
+
+    @Test
+    fun `doOnComplete doesn't run its function when the Publisher doesn't complete`() {
+        val open = Publishers.open<Unit>()
+        open.test()
+                .assertNotComplete()
+    }
+
+    @Test
     fun `doOnFinish runs its function when the Publisher succeeds`() {
         var hasBeenCalled = false
         Publishers.elements(Unit)
@@ -92,7 +109,7 @@ class ProcessorTests {
         Publishers.onSubscribe<Unit> { }
                 .doOnFinish { hasBeenCalled = true }
                 .subscribe()
-                .onCancel()
+                .cancel()
 
         assertThat(hasBeenCalled, `is`(true))
     }
@@ -112,8 +129,9 @@ class ProcessorTests {
         var hasBeenCalled = false
         Publishers.onSubscribe<Unit> { }
                 .doOnCancel { hasBeenCalled = true }
+                .map { Unit }
                 .subscribe()
-                .onCancel()
+                .cancel()
 
         assertThat(hasBeenCalled, `is`(true))
     }
@@ -139,5 +157,45 @@ class ProcessorTests {
                 .subscribe()
 
         assertThat(results, `is`(equalTo(listOf(3, 6, 9))))
+    }
+
+    @Test
+    fun `branch should create two separate publishers`() {
+        val (smaller, bigger) = Publishers.elements(1, 2, 3, 4)
+                .branch { it < 3 }
+
+        smaller.test()
+                .assertNoErrors()
+                .assertEmittedValues(1, 2)
+                .assertComplete()
+
+        bigger.test()
+                .assertNoErrors()
+                .assertEmittedValues(3, 4)
+                .assertComplete()
+    }
+
+    @Test
+    fun `branch should accept simultaneous subscriptions`() {
+        val open = Publishers.open<Int>()
+        val (smaller, bigger) = open.branch { it < 3 }
+        val smallSubscription = smaller.test()
+        val bigSubscription = bigger.test()
+
+        open.onNext(1)
+        open.onNext(2)
+        open.onNext(3)
+        open.onNext(4)
+        open.onComplete()
+
+        smallSubscription
+                .assertNoErrors()
+                .assertEmittedValues(1, 2)
+                .assertComplete()
+
+        bigSubscription
+                .assertNoErrors()
+                .assertEmittedValues(3, 4)
+                .assertComplete()
     }
 }

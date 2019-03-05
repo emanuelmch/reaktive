@@ -43,9 +43,10 @@ internal abstract class BasePublisher<T> : Publisher<T> {
     override fun test() = TestSubscriber(this)
 
     override fun distinctUntilChanged() = DistinctUntilChangedProcessor(this)
-    override fun filter(function: (T) -> Boolean) = FilterProcessor(this, function)
+    override fun filter(condition: (T) -> Boolean) = FilterProcessor(this, condition)
     override fun <V> map(function: (T) -> V) = MapperProcessor(this, function)
     override fun startWith(element: T) = StartWithProcessor(this, element)
+    override fun branch(condition: (T) -> Boolean) = Pair(FilterProcessor(this, condition), FilterProcessor(this, condition, invertCondition = true))
 
     override fun delay(delay: Long, unit: TimeUnit) = DelayProcessor(this, delay, unit)
     override fun signalOnBackground() = SignalOnThreadProcessor(this, BackgroundThreadWorker())
@@ -53,6 +54,7 @@ internal abstract class BasePublisher<T> : Publisher<T> {
     override fun blockingLast(): T = BlockingLastSubscriber<T>().subscribeTo(this)
 
     override fun doOnNext(action: (T) -> Unit) = DoOnNextProcessor(this, action)
+    override fun doOnComplete(action: () -> Unit) = DoOnCompleteProcessor(this, action)
     override fun doOnCancel(action: () -> Unit) = DoOnCancelProcessor(this, action)
     override fun doOnFinish(action: () -> Unit) = DoOnFinishProcessor(this, action)
     override fun doOnError(action: (Throwable) -> Unit) = DoOnErrorProcessor(this, action)

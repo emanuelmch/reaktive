@@ -29,6 +29,44 @@ import org.junit.Test
 class PublishersTests {
 
     @Test
+    fun `Cancelling subscribers should not affect other subscribers of the same Publisher`() {
+        val open = Publishers.open<Int>()
+
+        val subscriber1 = open.subscribe()
+        val subscriber2 = open.test()
+
+        subscriber1.cancel()
+
+        open.onNext(1)
+        open.onNext(2)
+        open.onComplete()
+
+        subscriber2
+                .assertEmittedValues(1, 2)
+                .assertComplete()
+    }
+
+    @Test
+    fun `Cancelled subscribers should not receive any more signals`() {
+        val open = Publishers.open<Unit>()
+
+        val subscriber1 = open.test()
+        open.subscribe()
+
+        subscriber1.cancel()
+
+        open.onNext(Unit)
+        open.onComplete()
+
+        subscriber1
+                .assertNoValuesEmitted()
+                .assertNotComplete()
+    }
+}
+
+class OnSubscribeTests {
+
+    @Test
     fun `onSubscribe creates a Publisher you can subscribe to`() {
         Publishers
                 .onSubscribe<Unit> { }

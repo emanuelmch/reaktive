@@ -32,9 +32,10 @@ interface Publisher<T> {
     // Processors
     fun distinctUntilChanged(): Publisher<T>
 
-    fun filter(function: (T) -> Boolean): Publisher<T>
+    fun filter(condition: (T) -> Boolean): Publisher<T>
     fun <V> map(function: (T) -> V): Publisher<V>
     fun startWith(element: T): Publisher<T>
+    fun branch(condition: (T) -> Boolean): Pair<Publisher<T>, Publisher<T>>
 
     // Threading Processors
     fun delay(delay: Long, unit: TimeUnit): Publisher<T>
@@ -46,6 +47,7 @@ interface Publisher<T> {
     // Events
     fun doOnNext(action: (T) -> Unit): Publisher<T>
 
+    fun doOnComplete(action: () -> Unit): Publisher<T>
     fun doOnCancel(action: () -> Unit): Publisher<T>
     fun doOnFinish(action: () -> Unit): Publisher<T>
     fun doOnError(action: (Throwable) -> Unit): Publisher<T>
@@ -59,7 +61,7 @@ interface Subscriber<T> {
 }
 
 interface Subscription {
-    fun onCancel()
+    fun cancel()
 }
 
 interface OpenPublisher<T, V> : Subscriber<T>, Publisher<V>

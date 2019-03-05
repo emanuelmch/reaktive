@@ -69,14 +69,38 @@ internal class EmptySubscriber<T> : Subscriber<T> {
 class TestSubscriber<T> internal constructor(publisher: Publisher<T>) {
 
     private val subscription: Subscription
+    private var didComplete: Boolean = false
     private val emittedValues = mutableListOf<T>()
+
     val emittedErrors = mutableSetOf<Throwable>()
 
     init {
         subscription = publisher
+                .doOnComplete { this.didComplete = true }
                 .doOnNext { this.emittedValues += it }
                 .doOnError { this.emittedErrors += it }
                 .subscribe()
+    }
+
+    fun cancel(): TestSubscriber<T> {
+        subscription.cancel()
+        return this
+    }
+
+    fun assertComplete(): TestSubscriber<T> {
+        if (didComplete) {
+            return this
+        }
+
+        throw AssertionError("Expected subscription to have received an `onComplete` signal")
+    }
+
+    fun assertNotComplete(): TestSubscriber<T> {
+        if (didComplete) {
+            throw java.lang.AssertionError("Expected subscription to NOT have received an `onComplete` signal")
+        }
+
+        return this
     }
 
     fun assertEmittedValues(vararg elements: T): TestSubscriber<T> {
@@ -87,8 +111,11 @@ class TestSubscriber<T> internal constructor(publisher: Publisher<T>) {
         return this
     }
 
-    fun onCancel(): TestSubscriber<T> {
-        subscription.onCancel()
+    fun assertNoValuesEmitted(): TestSubscriber<T> {
+        if (emittedValues.isNotEmpty()) {
+            throw java.lang.AssertionError("Expected no elements no have been emitted, but was [$emittedValues]")
+        }
+
         return this
     }
 

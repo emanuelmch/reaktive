@@ -34,7 +34,7 @@ class SubscriptionBag {
             subscriptions.clear()
         }
 
-        atomicSubscriptions.forEach(Subscription::onCancel)
+        atomicSubscriptions.forEach(Subscription::cancel)
     }
 
     operator fun plusAssign(subscription: Subscription) {

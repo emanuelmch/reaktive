@@ -37,10 +37,10 @@ internal class DistinctUntilChangedProcessor<T>(origin: Publisher<T>) : Subscrib
     }
 }
 
-internal class FilterProcessor<T>(origin: Publisher<T>, private val filter: (T) -> Boolean) : SubscriberPublisher<T, T>(origin) {
+internal class FilterProcessor<T>(origin: Publisher<T>, private val condition: (T) -> Boolean, private val invertCondition: Boolean = false) : SubscriberPublisher<T, T>(origin) {
 
     override fun safeOnNext(element: T) {
-        if (filter(element)) {
+        if (condition(element).xor(invertCondition)) {
             super.safeOnNext(element)
         }
     }
@@ -62,6 +62,14 @@ internal class DoOnNextProcessor<T>(origin: Publisher<T>, private val action: (T
     override fun safeOnNext(element: T) {
         action(element)
         super.safeOnNext(element)
+    }
+}
+
+internal class DoOnCompleteProcessor<T>(origin: Publisher<T>, private val action:()->Unit):SubscriberPublisher<T,T>(origin) {
+
+    override fun onComplete() {
+        action()
+        super.onComplete()
     }
 }
 

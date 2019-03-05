@@ -28,13 +28,13 @@ internal open class SubscriberPublisher<T, V>(
         private val origin: Publisher<T>? = null,
         private val setup: ((Subscriber<T>) -> Unit)? = null,
         private val mapper: ((T) -> V)? = null
-) : BasePublisher<V>(), OpenPublisher<T, V>, Subscriber<T>, Subscription {
-    private lateinit var subscriber: Subscriber<V>
+) : BasePublisher<V>(), OpenPublisher<T, V>, Subscriber<T> {
+    private val subscribers = mutableSetOf<Subscriber<V>>()
 
-    open fun safeOnNext(element: V) = subscriber.onNext(element)
-    override fun onComplete() = subscriber.onComplete()
-    override fun onCancel() = subscriber.onCancel()
-    override fun onError(error: Throwable) = subscriber.onError(error)
+    open fun safeOnNext(element: V) = subscribers.forEach { it.onNext(element) }
+    override fun onComplete() = subscribers.forEach(Subscriber<V>::onComplete)
+    override fun onCancel() = subscribers.forEach(Subscriber<V>::onCancel)
+    override fun onError(error: Throwable) = subscribers.forEach { it.onError(error) }
 
     final override fun onNext(element: T) {
         try {
@@ -48,8 +48,13 @@ internal open class SubscriberPublisher<T, V>(
     private fun map(element: T) = mapper?.invoke(element) ?: element as V
 
     override fun subscribe(subscriber: Subscriber<V>): Subscription {
-        this.subscriber = subscriber
+        this.subscribers += subscriber
         setup?.invoke(this)
-        return origin?.subscribe(this) ?: this
+        return origin?.subscribe(this) ?: object : Subscription {
+            override fun cancel() {
+                subscriber.onCancel()
+                subscribers -= subscriber
+             }
+        }
     }
 }
