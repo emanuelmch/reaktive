@@ -79,10 +79,8 @@ class TestSubscriber<T> internal constructor(publisher: Publisher<T>) {
                 .subscribe()
     }
 
-    // FIXME: This should be called assertEmittedValues
-    fun assertValuesOnly(vararg elements: T): TestSubscriber<T> {
+    fun assertEmittedValues(vararg elements: T): TestSubscriber<T> {
         if (elements.toList() != emittedValues) {
-            // FIXME: Should have a better error message
             throw AssertionError("Values are wrong, expected [$elements] but was [$emittedValues]")
         }
 

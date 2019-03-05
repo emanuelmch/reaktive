@@ -35,7 +35,7 @@ class ProcessorTests {
                 .distinctUntilChanged()
                 .test()
                 .assertNoErrors()
-                .assertValuesOnly(1, 2)
+                .assertEmittedValues(1, 2)
     }
 
     @Test
@@ -44,7 +44,7 @@ class ProcessorTests {
                 .map { it * 2 }
                 .test()
                 .assertNoErrors()
-                .assertValuesOnly(2)
+                .assertEmittedValues(2)
     }
 
     @Test
@@ -53,7 +53,7 @@ class ProcessorTests {
                 .startWith(0)
                 .test()
                 .assertNoErrors()
-                .assertValuesOnly(0, 1)
+                .assertEmittedValues(0, 1)
     }
 
     @Test
