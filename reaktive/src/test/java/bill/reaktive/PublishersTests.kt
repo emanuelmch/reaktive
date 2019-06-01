@@ -24,6 +24,7 @@ package bill.reaktive
 
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
+import org.junit.Assert.fail
 import org.junit.Test
 
 class PublishersTests {
@@ -61,6 +62,22 @@ class PublishersTests {
         subscriber1
                 .assertNoValuesEmitted()
                 .assertNotComplete()
+    }
+
+    @Test
+    fun `Mid-chain operators should not keep their subscribers`() {
+        val open = Publishers.open<Unit>()
+        val origin = open.doOnNext { }
+
+        val test = origin.doOnNext { fail() }.test()
+        test.cancel()
+
+        val subscription = origin.subscribe()
+        open.onNext(Unit)
+
+        subscription.cancel()
+
+        test.assertNoErrors()
     }
 }
 

@@ -50,11 +50,17 @@ internal open class SubscriberPublisher<T, V>(
     override fun subscribe(subscriber: Subscriber<V>): Subscription {
         this.subscribers += subscriber
         setup?.invoke(this)
-        return origin?.subscribe(this) ?: object : Subscription {
-            override fun cancel() {
-                subscriber.onCancel()
-                subscribers -= subscriber
-             }
+
+        return if (origin != null) {
+            val wrapper = WrapperSubscriber(this, onFinish = { subscribers.remove(subscriber) })
+            origin.subscribe(wrapper)
+        } else {
+            object : Subscription {
+                override fun cancel() {
+                    subscriber.onCancel()
+                    subscribers -= subscriber
+                }
+            }
         }
     }
 }
