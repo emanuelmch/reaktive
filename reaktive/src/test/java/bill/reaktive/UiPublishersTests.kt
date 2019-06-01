@@ -24,9 +24,6 @@ package bill.reaktive
 
 import android.view.View
 import bill.reaktive.test.MockView
-import io.mockk.Answer
-import io.mockk.every
-import io.mockk.mockk
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.Before
