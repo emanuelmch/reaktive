@@ -9,6 +9,11 @@ android {
         targetSdkVersion 28
         versionCode 1
         versionName "1.0"
+
+        // Does this really help? Probably not.
+        kotlinOptions {
+            freeCompilerArgs = ['-Xno-param-assertions', '-Xno-call-assertions', '-Xno-receiver-assertions']
+        }
     }
 
     buildTypes {
