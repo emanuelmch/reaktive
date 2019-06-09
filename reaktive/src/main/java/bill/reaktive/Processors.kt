@@ -65,7 +65,7 @@ internal class DoOnNextProcessor<T>(origin: Publisher<T>, private val action: (T
     }
 }
 
-internal class DoOnCompleteProcessor<T>(origin: Publisher<T>, private val action:()->Unit):SubscriberPublisher<T,T>(origin) {
+internal class DoOnCompleteProcessor<T>(origin: Publisher<T>, private val action: () -> Unit) : SubscriberPublisher<T, T>(origin) {
 
     override fun onComplete() {
         action()
