@@ -68,14 +68,14 @@ internal class EmptySubscriber<T> : Subscriber<T> {
 
 class TestSubscriber<T> internal constructor(publisher: Publisher<T>) {
 
-    private val subscription: Subscription
+    private val internalSubscription: Cancellable
     private var didComplete: Boolean = false
     private val emittedValues = mutableListOf<T>()
 
     val emittedErrors = mutableSetOf<Throwable>()
 
     init {
-        subscription = publisher
+        internalSubscription = publisher
                 .doOnComplete { this.didComplete = true }
                 .doOnNext { this.emittedValues += it }
                 .doOnError { this.emittedErrors += it }
@@ -83,7 +83,7 @@ class TestSubscriber<T> internal constructor(publisher: Publisher<T>) {
     }
 
     fun cancel(): TestSubscriber<T> {
-        subscription.cancel()
+        internalSubscription.cancel()
         return this
     }
 

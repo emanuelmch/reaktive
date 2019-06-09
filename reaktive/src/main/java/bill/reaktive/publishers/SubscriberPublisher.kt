@@ -47,7 +47,7 @@ internal open class SubscriberPublisher<T, V>(
     @Suppress("UNCHECKED_CAST")
     private fun map(element: T) = mapper?.invoke(element) ?: element as V
 
-    override fun subscribe(subscriber: Subscriber<V>): Subscription {
+    override fun subscribe(subscriber: Subscriber<V>): Cancellable {
         this.subscribers += subscriber
         setup?.invoke(this)
 
@@ -55,7 +55,7 @@ internal open class SubscriberPublisher<T, V>(
             val wrapper = WrapperSubscriber(this, onFinish = { subscribers.remove(subscriber) })
             origin.subscribe(wrapper)
         } else {
-            object : Subscription {
+            object : Cancellable {
                 override fun cancel() {
                     subscriber.onCancel()
                     subscribers -= subscriber

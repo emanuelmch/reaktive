@@ -51,7 +51,7 @@ internal class MapperProcessor<T, V>(origin: Publisher<T>, mapper: (T) -> V)
 
 internal class StartWithProcessor<T>(origin: Publisher<T>, private val initialElement: T) : SubscriberPublisher<T, T>(origin) {
 
-    override fun subscribe(subscriber: Subscriber<T>): Subscription {
+    override fun subscribe(subscriber: Subscriber<T>): Cancellable {
         subscriber.onNext(initialElement)
         return super.subscribe(subscriber)
     }
