@@ -22,6 +22,7 @@
 
 package bill.reaktive
 
+import android.util.Log
 import java.util.concurrent.CountDownLatch
 
 //FIXME: Make this thread-safe
@@ -59,11 +60,29 @@ internal class BlockingLastSubscriber<T> : Subscriber<T> {
     }
 }
 
+class UnhandledErrorException(cause: Throwable) : IllegalStateException(extract(cause)) {
+    private companion object {
+        fun extract(exception: Throwable): Throwable {
+            var cause = exception
+
+            while (cause is UnhandledErrorException) cause = cause.cause!!
+
+            return cause
+        }
+    }
+}
+
 internal class EmptySubscriber<T> : Subscriber<T> {
     override fun onNext(element: T) {}
     override fun onComplete() {}
     override fun onCancel() {}
-    override fun onError(error: Throwable) {}
+    override fun onError(error: Throwable) {
+        if (TestMode.isEnabled) {
+            throw UnhandledErrorException(error)
+        } else {
+            Log.e("Reaktive", "Unhandled error signal", error)
+        }
+    }
 }
 
 class TestSubscriber<T> internal constructor(publisher: Publisher<T>) {
