@@ -26,65 +26,89 @@ import android.os.Handler
 import android.os.Looper
 import bill.reaktive.publishers.SubscriberPublisher
 import java.util.concurrent.Executors
+import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 
 internal class SignalOnThreadProcessor<T>(origin: Publisher<T>, private val threadWorker: ThreadWorker) : SubscriberPublisher<T, T>(origin) {
+    private val semaphore = Semaphore(1, true)
+
     override fun safeOnNext(element: T) {
         threadWorker.run {
+            semaphore.acquire()
             super.safeOnNext(element)
+            semaphore.release()
         }
     }
 
     override fun onCancel() {
-        threadWorker.dispose()
-        super.onCancel()
+        threadWorker.runTerminal {
+            semaphore.acquire()
+            super.onCancel()
+            semaphore.release()
+        }
     }
 
     override fun onComplete() {
-        threadWorker.dispose()
-        super.onComplete()
+        threadWorker.runTerminal {
+            semaphore.acquire()
+            super.onComplete()
+            semaphore.release()
+        }
     }
 
     override fun onError(error: Throwable) {
-        threadWorker.dispose()
-        super.onError(error)
+        threadWorker.runTerminal {
+            semaphore.acquire()
+            super.onError(error)
+            semaphore.release()
+        }
     }
 }
 
-internal interface ThreadWorker {
-    fun run(action: () -> Unit)
-    fun dispose()
+internal abstract class ThreadWorker {
+    fun run(action: () -> Unit) {
+        if (TestMode.isEnabled) {
+            action()
+        } else {
+            post(action)
+        }
+    }
+
+    fun runTerminal(action: () -> Unit) {
+        if (TestMode.isEnabled) {
+            action()
+        } else {
+            post {
+                action()
+                shutdown()
+            }
+        }
+    }
+
+    abstract fun post(action: () -> Unit)
+    abstract fun shutdown()
 }
 
-internal class BackgroundThreadWorker : ThreadWorker {
+internal class BackgroundThreadWorker : ThreadWorker() {
+
     private val threadPool by lazy { Executors.newCachedThreadPool() }
 
-    override fun run(action: () -> Unit) {
-        if (TestMode.isEnabled) {
-            action()
-        } else {
-            threadPool.submit(action)
-        }
+    override fun post(action: () -> Unit) {
+        threadPool.submit(action)
     }
 
-    override fun dispose() {
-        if (TestMode.isEnabled.not()) {
-            threadPool.shutdown()
-        }
+    override fun shutdown() {
+        threadPool.shutdown()
     }
 }
 
-internal class ForegroundThreadWorker : ThreadWorker {
+internal class ForegroundThreadWorker : ThreadWorker() {
+
     private val mainHandler by lazy { Handler(Looper.getMainLooper()) }
 
-    override fun run(action: () -> Unit) {
-        if (TestMode.isEnabled) {
-            action()
-        } else {
-            mainHandler.post(action)
-        }
+    override fun post(action: () -> Unit) {
+        mainHandler.post(action)
     }
 
-    override fun dispose() {
-    }
+    override fun shutdown() {}
 }

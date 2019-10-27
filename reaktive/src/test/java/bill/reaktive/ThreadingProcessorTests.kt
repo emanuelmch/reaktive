@@ -20,27 +20,27 @@
  * SOFTWARE.
  */
 
-package bill.reaktive.publishers
+package bill.reaktive
 
-import bill.reaktive.Subscriber
+import bill.reaktive.test.signalOnSleepingThread
+import org.junit.Test
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
-class WrapperSubscriber<T>(private val subscriber: Subscriber<T>,
-                           private val onFinish: () -> Unit) : Subscriber<T> {
+class ThreadingProcessorTests {
 
-    override fun onNext(element: T) = subscriber.onNext(element)
+    @Test
+    fun `onNext signals should arrive in the same order they were emitted`() {
+        val threadPool = Executors.newCachedThreadPool()
+        Publishers.elements(500, 200, 300, 100)
+            .signalOnSleepingThread(threadPool, listOf(500, 200, 300, 100))
+            .test()
+                        .awaitTerminalSignal(2, TimeUnit.SECONDS)
+//            threadPool.awaitTermination(5, TimeUnit.SECONDS)
+//        Thread.sleep(TimeUnit.SECONDS.toMillis(8))
+//                x
+            .assertComplete()
+            .assertEmittedValues(500, 200, 300, 100)
 
-    override fun onComplete() {
-        subscriber.onComplete()
-        onFinish()
-    }
-
-    override fun onCancel() {
-        subscriber.onCancel()
-        onFinish()
-    }
-
-    override fun onError(error: Throwable) {
-        subscriber.onError(error)
-        onFinish()
     }
 }

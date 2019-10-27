@@ -22,26 +22,49 @@
 
 package bill.reaktive.publishers
 
-import bill.reaktive.*
+import bill.reaktive.BasePublisher
+import bill.reaktive.Cancellable
+import bill.reaktive.OpenPublisher
+import bill.reaktive.Publisher
+import bill.reaktive.Subscriber
 
 internal open class SubscriberPublisher<T, V>(
-        private val origin: Publisher<T>? = null,
-        private val setup: ((Subscriber<T>) -> Unit)? = null,
-        private val mapper: ((T) -> V)? = null
+    private val origin: Publisher<T>? = null,
+    private val setup: ((Subscriber<T>) -> Unit)? = null,
+    private val mapper: ((T) -> V)? = null
 ) : BasePublisher<V>(), OpenPublisher<T, V>, Subscriber<T> {
+
     private val subscribers = mutableSetOf<Subscriber<V>>()
+    // This should be part of a Subscription
+    private var onFinished: (() -> Unit)? = null
+    private var isCompleted = false
 
     open fun safeOnNext(element: V) = subscribers.forEach { it.onNext(element) }
-    override fun onComplete() = subscribers.forEach(Subscriber<V>::onComplete)
-    override fun onCancel() = subscribers.forEach(Subscriber<V>::onCancel)
-    override fun onError(error: Throwable) = subscribers.forEach { it.onError(error) }
 
     final override fun onNext(element: T) {
+        check(isCompleted.not()) { "Can't emit onNext on completed publishers" }
+
         try {
             safeOnNext(map(element))
         } catch (ex: Throwable) {
             onError(ex)
         }
+    }
+
+    override fun onComplete() {
+        subscribers.forEach(Subscriber<V>::onComplete)
+        subscribers.clear()
+        isCompleted = true
+    }
+
+    override fun onCancel() {
+        subscribers.forEach(Subscriber<V>::onCancel)
+        subscribers.clear()
+    }
+
+    override fun onError(error: Throwable) {
+        subscribers.forEach { it.onError(error) }
+        subscribers.clear()
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -52,8 +75,9 @@ internal open class SubscriberPublisher<T, V>(
         setup?.invoke(this)
 
         return if (origin != null) {
-            val wrapper = WrapperSubscriber(this, onFinish = { subscribers.remove(subscriber) })
-            origin.subscribe(wrapper)
+            //            val wrapper = WrapperSubscriber(this, onFinish = { subscribers.remove(subscriber) })
+            //            origin.subscribe(wrapper)
+            origin.subscribe(this)
         } else {
             object : Cancellable {
                 override fun cancel() {

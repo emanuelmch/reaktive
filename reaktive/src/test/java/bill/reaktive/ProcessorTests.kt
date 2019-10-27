@@ -25,12 +25,13 @@ package bill.reaktive
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.MatcherAssert.assertThat
+import org.junit.Ignore
 import org.junit.Test
 
 class ProcessorTests {
 
     @Test
-    fun `distinctUntilChanged doesn't emit repeating emissions`() {
+    fun `distinctUntilChanged doesn't emit repeating elements`() {
         Publishers.elements(1, 1, 2)
                 .distinctUntilChanged()
                 .test()
@@ -159,6 +160,7 @@ class ProcessorTests {
     }
 
     @Test
+    @Ignore("branch actually needs share")
     fun `branch should create two separate publishers`() {
         val (smaller, bigger) = Publishers.elements(1, 2, 3, 4)
                 .branch { it < 3 }

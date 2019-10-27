@@ -111,4 +111,11 @@ class OpenPublisherTests {
         publisher.onError(UnsupportedOperationException("Testing"))
         subscriber.assertError<UnsupportedOperationException>()
     }
+
+    @Test(expected = IllegalStateException::class)
+    fun `Open Publishers should fail when signaling an onNext after it's already completed`() {
+        val publisher = Publishers.open<Any>()
+        publisher.onComplete()
+        publisher.onNext(Unit)
+    }
 }

@@ -24,9 +24,11 @@ package bill.reaktive
 
 import android.util.Log
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 //FIXME: Make this thread-safe
 internal class BlockingLastSubscriber<T> : Subscriber<T> {
+
     private var latestValue: T? = null
     private var isFinished = false
     private val countDownLatch = CountDownLatch(1)
@@ -95,14 +97,19 @@ class TestSubscriber<T> internal constructor(publisher: Publisher<T>) {
 
     init {
         internalSubscription = publisher
-                .doOnComplete { this.didComplete = true }
-                .doOnNext { this.emittedValues += it }
-                .doOnError { this.emittedErrors += it }
-                .subscribe()
+            .doOnComplete { this.didComplete = true }
+            .doOnNext { this.emittedValues += it }
+            .doOnError { this.emittedErrors += it }
+            .subscribe()
     }
 
     fun cancel(): TestSubscriber<T> {
         internalSubscription.cancel()
+        return this
+    }
+
+    fun awaitTerminalSignal(timeout: Long, timeUnit: TimeUnit): TestSubscriber<T> {
+        Thread.sleep(timeUnit.toMillis(timeout))
         return this
     }
 
@@ -124,7 +131,7 @@ class TestSubscriber<T> internal constructor(publisher: Publisher<T>) {
 
     fun assertEmittedValues(vararg elements: T): TestSubscriber<T> {
         if (elements.toList() != emittedValues) {
-            throw AssertionError("Values are wrong, expected [$elements] but was [$emittedValues]")
+            throw AssertionError("Values are wrong, expected [${elements.toList()}] but was [$emittedValues]")
         }
 
         return this

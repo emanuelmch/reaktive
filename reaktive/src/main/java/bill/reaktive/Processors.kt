@@ -27,11 +27,11 @@ import bill.reaktive.publishers.SubscriberPublisher
 
 internal class DistinctUntilChangedProcessor<T>(origin: Publisher<T>) : SubscriberPublisher<T, T>(origin) {
 
-    private var lastEmission: T? = null
+    private var lastElement: T? = null
 
     override fun safeOnNext(element: T) {
-        if (element != lastEmission) {
-            lastEmission = element
+        if (element != lastElement) {
+            lastElement = element
             super.safeOnNext(element)
         }
     }
