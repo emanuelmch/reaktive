@@ -38,8 +38,6 @@ interface Publisher<T> {
     fun branch(condition: (T) -> Boolean): Pair<Publisher<T>, Publisher<T>>
 
     // Threading Processors
-    fun delay(delay: Long, unit: TimeUnit): Publisher<T>
-
     fun signalOnBackground(): Publisher<T>
     fun signalOnForeground(): Publisher<T>
     fun blockingLast(): T

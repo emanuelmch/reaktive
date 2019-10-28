@@ -48,7 +48,6 @@ internal abstract class BasePublisher<T> : Publisher<T> {
     override fun startWith(element: T) = StartWithProcessor(this, element)
     override fun branch(condition: (T) -> Boolean) = Pair(FilterProcessor(this, condition), FilterProcessor(this, condition, invertCondition = true))
 
-    override fun delay(delay: Long, unit: TimeUnit) = DelayProcessor(this, delay, unit)
     override fun signalOnBackground() = SignalOnThreadProcessor(this, BackgroundThreadWorker())
     override fun signalOnForeground() = SignalOnThreadProcessor(this, ForegroundThreadWorker())
     override fun blockingLast(): T = BlockingLastSubscriber<T>().subscribeTo(this)

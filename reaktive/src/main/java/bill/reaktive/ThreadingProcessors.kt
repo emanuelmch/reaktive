@@ -88,15 +88,3 @@ internal class ForegroundThreadWorker : ThreadWorker {
     override fun dispose() {
     }
 }
-
-internal class DelayProcessor<T>(origin: Publisher<T>,
-                                 private val delay: Long,
-                                 private val unit: TimeUnit) : SubscriberPublisher<T, T>(origin) {
-
-    override fun safeOnNext(element: T) {
-        if (TestMode.isEnabled.not()) {
-            Thread.sleep(unit.toMillis(delay))
-        }
-        super.safeOnNext(element)
-    }
-}
