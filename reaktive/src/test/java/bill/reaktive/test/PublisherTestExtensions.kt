@@ -22,26 +22,34 @@
 
 package bill.reaktive.test
 
+import bill.reaktive.BackgroundThreadWorker
 import bill.reaktive.Publisher
-import bill.reaktive.SignalOnThreadProcessor
-import bill.reaktive.ThreadWorker
-import java.util.concurrent.ExecutorService
+import bill.reaktive.publishers.SubscriberPublisher
 
-internal fun Publisher<Int>.signalOnSleepingThread(threadPool: ExecutorService, sleepTimers: List<Long>) =
-    SignalOnThreadProcessor(this, SleepingThreadWorker(threadPool, sleepTimers))
+fun <T> Publisher<T>.signalOnSleepingThread(vararg sleepTimers: Long): Publisher<T> =
+        SignalOnSleepingThreadProcessor(this, sleepTimers)
 
-internal class SleepingThreadWorker(private val threadPool: ExecutorService, sleepTimers: List<Long>) : ThreadWorker() {
+internal class SignalOnSleepingThreadProcessor<T>(origin: Publisher<T>, sleepTimers: LongArray) : SubscriberPublisher<T, T>(origin) {
 
-    private val timers = sleepTimers.listIterator()
+    private val sleepTimers = sleepTimers.iterator()
+    private val threadWorker = BackgroundThreadWorker()
 
-    override fun post(action: () -> Unit) {
-        threadPool.submit {
-            action()
-            Thread.sleep(timers.next())
+    override fun safeOnNext(element: T) {
+        threadWorker.run {
+            Thread.sleep(sleepTimers.next())
+            super.safeOnNext(element)
         }
     }
 
-    override fun shutdown() {
-        threadPool.shutdown()
+    override fun onCancel() {
+        threadWorker.run { super.onCancel() }
+    }
+
+    override fun onComplete() {
+        threadWorker.run { super.onComplete() }
+    }
+
+    override fun onError(error: Throwable) {
+        threadWorker.run { super.onError(error) }
     }
 }

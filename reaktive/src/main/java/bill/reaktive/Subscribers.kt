@@ -25,6 +25,8 @@ package bill.reaktive
 import android.util.Log
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
 //FIXME: Make this thread-safe
 internal class BlockingLastSubscriber<T> : Subscriber<T> {
@@ -89,18 +91,29 @@ internal class EmptySubscriber<T> : Subscriber<T> {
 
 class TestSubscriber<T> internal constructor(publisher: Publisher<T>) {
 
+    // Core
     private val internalSubscription: Cancellable
+
+    // Multi-thread signaling
+    private val terminalLock = ReentrantLock()
+    private val terminalSignal = terminalLock.newCondition()
+
+    // Values
     private var didComplete: Boolean = false
     private val emittedValues = mutableListOf<T>()
-
     val emittedErrors = mutableSetOf<Throwable>()
 
     init {
         internalSubscription = publisher
-            .doOnComplete { this.didComplete = true }
-            .doOnNext { this.emittedValues += it }
-            .doOnError { this.emittedErrors += it }
-            .subscribe()
+                .doOnComplete {
+                    terminalLock.withLock {
+                        this.didComplete = true
+                        terminalSignal.signal()
+                    }
+                }
+                .doOnNext { this.emittedValues += it }
+                .doOnError { this.emittedErrors += it }
+                .subscribe()
     }
 
     fun cancel(): TestSubscriber<T> {
@@ -108,8 +121,13 @@ class TestSubscriber<T> internal constructor(publisher: Publisher<T>) {
         return this
     }
 
-    fun awaitTerminalSignal(timeout: Long, timeUnit: TimeUnit): TestSubscriber<T> {
-        Thread.sleep(timeUnit.toMillis(timeout))
+    fun awaitTerminalSignal(duration: Long, timeUnit: TimeUnit): TestSubscriber<T> {
+        terminalLock.withLock {
+            // FIXME: Should take all terminal signals into account
+            if (didComplete.not()) {
+                terminalSignal.await(duration, timeUnit)
+            }
+        }
         return this
     }
 

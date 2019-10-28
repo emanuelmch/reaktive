@@ -27,66 +27,56 @@ import android.os.Looper
 import bill.reaktive.publishers.SubscriberPublisher
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
-import java.util.concurrent.TimeUnit
 
 internal class SignalOnThreadProcessor<T>(origin: Publisher<T>, private val threadWorker: ThreadWorker) : SubscriberPublisher<T, T>(origin) {
-    private val semaphore = Semaphore(1, true)
 
     override fun safeOnNext(element: T) {
-        threadWorker.run {
-            semaphore.acquire()
-            super.safeOnNext(element)
-            semaphore.release()
-        }
+        threadWorker.run { super.safeOnNext(element) }
     }
 
     override fun onCancel() {
-        threadWorker.runTerminal {
-            semaphore.acquire()
-            super.onCancel()
-            semaphore.release()
-        }
+        threadWorker.run { super.onCancel() }
+        threadWorker.dispose()
     }
 
     override fun onComplete() {
-        threadWorker.runTerminal {
-            semaphore.acquire()
-            super.onComplete()
-            semaphore.release()
-        }
+        threadWorker.run { super.onComplete() }
+        threadWorker.dispose()
     }
 
     override fun onError(error: Throwable) {
-        threadWorker.runTerminal {
-            semaphore.acquire()
-            super.onError(error)
-            semaphore.release()
-        }
+        threadWorker.run { super.onError(error) }
+        threadWorker.dispose()
     }
 }
 
 internal abstract class ThreadWorker {
+    private val semaphore = Semaphore(1, true)
+
     fun run(action: () -> Unit) {
         if (TestMode.isEnabled) {
             action()
         } else {
-            post(action)
+            post {
+                semaphore.acquire()
+                action()
+                semaphore.release()
+            }
         }
     }
 
-    fun runTerminal(action: () -> Unit) {
-        if (TestMode.isEnabled) {
-            action()
-        } else {
+    fun dispose() {
+        if (TestMode.isEnabled.not()) {
             post {
-                action()
+                semaphore.acquire()
                 shutdown()
+                semaphore.release()
             }
         }
     }
 
     abstract fun post(action: () -> Unit)
-    abstract fun shutdown()
+    open fun shutdown() {}
 }
 
 internal class BackgroundThreadWorker : ThreadWorker() {
@@ -109,6 +99,4 @@ internal class ForegroundThreadWorker : ThreadWorker() {
     override fun post(action: () -> Unit) {
         mainHandler.post(action)
     }
-
-    override fun shutdown() {}
 }

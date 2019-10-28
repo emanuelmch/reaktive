@@ -25,6 +25,7 @@ package bill.reaktive
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.Assert.fail
+import org.junit.Rule
 import org.junit.Test
 
 class PublishersTests {

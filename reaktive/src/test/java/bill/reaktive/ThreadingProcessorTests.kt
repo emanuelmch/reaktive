@@ -31,16 +31,12 @@ class ThreadingProcessorTests {
 
     @Test
     fun `onNext signals should arrive in the same order they were emitted`() {
-        val threadPool = Executors.newCachedThreadPool()
         Publishers.elements(500, 200, 300, 100)
-            .signalOnSleepingThread(threadPool, listOf(500, 200, 300, 100))
-            .test()
-                        .awaitTerminalSignal(2, TimeUnit.SECONDS)
-//            threadPool.awaitTermination(5, TimeUnit.SECONDS)
-//        Thread.sleep(TimeUnit.SECONDS.toMillis(8))
-//                x
-            .assertComplete()
-            .assertEmittedValues(500, 200, 300, 100)
+                .signalOnSleepingThread( 500, 200, 300, 100)
+                .test()
+                .awaitTerminalSignal(5, TimeUnit.SECONDS)
+                .assertEmittedValues(500, 200, 300, 100)
+                .assertComplete()
 
     }
 }

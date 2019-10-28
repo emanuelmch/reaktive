@@ -22,11 +22,7 @@
 
 package bill.reaktive.publishers
 
-import bill.reaktive.BasePublisher
-import bill.reaktive.Cancellable
-import bill.reaktive.OpenPublisher
-import bill.reaktive.Publisher
-import bill.reaktive.Subscriber
+import bill.reaktive.*
 
 internal open class SubscriberPublisher<T, V>(
     private val origin: Publisher<T>? = null,
@@ -35,14 +31,12 @@ internal open class SubscriberPublisher<T, V>(
 ) : BasePublisher<V>(), OpenPublisher<T, V>, Subscriber<T> {
 
     private val subscribers = mutableSetOf<Subscriber<V>>()
-    // This should be part of a Subscription
-    private var onFinished: (() -> Unit)? = null
-    private var isCompleted = false
+    private var isTerminated = false
 
     open fun safeOnNext(element: V) = subscribers.forEach { it.onNext(element) }
 
     final override fun onNext(element: T) {
-        check(isCompleted.not()) { "Can't emit onNext on completed publishers" }
+        check(isTerminated.not()) { "Can't emit onNext on terminated publishers" }
 
         try {
             safeOnNext(map(element))
@@ -53,18 +47,22 @@ internal open class SubscriberPublisher<T, V>(
 
     override fun onComplete() {
         subscribers.forEach(Subscriber<V>::onComplete)
-        subscribers.clear()
-        isCompleted = true
+        onTerminalSignal()
     }
 
     override fun onCancel() {
         subscribers.forEach(Subscriber<V>::onCancel)
-        subscribers.clear()
+        onTerminalSignal()
     }
 
     override fun onError(error: Throwable) {
         subscribers.forEach { it.onError(error) }
+        onTerminalSignal()
+    }
+
+    private fun onTerminalSignal() {
         subscribers.clear()
+        isTerminated = true
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -75,8 +73,6 @@ internal open class SubscriberPublisher<T, V>(
         setup?.invoke(this)
 
         return if (origin != null) {
-            //            val wrapper = WrapperSubscriber(this, onFinish = { subscribers.remove(subscriber) })
-            //            origin.subscribe(wrapper)
             origin.subscribe(this)
         } else {
             object : Cancellable {
