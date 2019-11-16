@@ -124,7 +124,7 @@ class TestSubscriber<T> internal constructor(publisher: Publisher<T>) {
 
     fun assertEmittedValues(vararg elements: T): TestSubscriber<T> {
         if (elements.toList() != emittedValues) {
-            throw AssertionError("Values are wrong, expected [$elements] but was [$emittedValues]")
+            throw AssertionError("Values are wrong, expected [${elements.toList()}] but was [$emittedValues]")
         }
 
         return this
