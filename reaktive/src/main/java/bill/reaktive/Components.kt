@@ -35,6 +35,7 @@ interface Publisher<T> {
     fun filter(condition: (T) -> Boolean): Publisher<T>
     fun <V> map(function: (T) -> V): Publisher<V>
     fun startWith(element: T): Publisher<T>
+    fun startWith(factory: () -> T): Publisher<T>
     fun branch(condition: (T) -> Boolean): Pair<Publisher<T>, Publisher<T>>
 
     // Threading Processors

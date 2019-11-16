@@ -49,9 +49,10 @@ internal class FilterProcessor<T>(origin: Publisher<T>, private val condition: (
 internal class MapperProcessor<T, V>(origin: Publisher<T>, mapper: (T) -> V)
     : SubscriberPublisher<T, V>(origin, mapper = mapper)
 
-internal class StartWithProcessor<T>(origin: Publisher<T>, private val initialElement: T) : SubscriberPublisher<T, T>(origin) {
+internal class StartWithProcessor<T>(origin: Publisher<T>, private val elementFactory: () -> T) : SubscriberPublisher<T, T>(origin) {
 
     override fun subscribe(subscriber: Subscriber<T>): Cancellable {
+        val initialElement = elementFactory()
         subscriber.onNext(initialElement)
         return super.subscribe(subscriber)
     }

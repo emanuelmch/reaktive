@@ -48,10 +48,33 @@ class ProcessorTests {
     }
 
     @Test
-    fun `startWith emits the initial value first`() {
+    fun `startWith (object) emits the initial value first`() {
         Publishers.elements(1)
                 .startWith(0)
                 .test()
+                .assertNoErrors()
+                .assertEmittedValues(0, 1)
+    }
+
+    @Test
+    fun `startWith (factory) emits the initial value first`() {
+        Publishers.elements(1)
+                .startWith { 0 }
+                .test()
+                .assertNoErrors()
+                .assertEmittedValues(0, 1)
+    }
+
+    @Test
+    fun `startWith (factory) only calls factory function on subscription`() {
+        var changingElement = 123
+
+        val publisher = Publishers.elements(1)
+                .startWith { changingElement }
+
+        changingElement = 0
+
+        publisher.test()
                 .assertNoErrors()
                 .assertEmittedValues(0, 1)
     }
